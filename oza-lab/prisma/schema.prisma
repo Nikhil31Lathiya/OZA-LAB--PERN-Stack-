@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model role {
+  id         Int          @id @default(autoincrement())
+  role       String
+  User       User[]
+  Permission Permission[]
+}
+
+model Permission {
+  id             Int    @id @default(autoincrement())
+  permissionName String
+  roleId         Int    @map("role_id")
+  role           role   @relation(fields: [roleId], references: [id])
+}
+
+model User {
+  id        Int         @id @default(autoincrement())
+  roleId    Int         @map("role_id")
+  title     String
+  firstName String      @map("first_name")
+  lastName  String?     @map("last_name")
+  gender    String
+  dob       DateTime    @db.Date
+  email     String      @unique
+  contact   String
+  address   String
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime    @default(now()) @map("updated_at") @db.Timestamp(6)
+  role      role        @relation(fields: [roleId], references: [id])
+  Patient   Patient[]
+  HomeVisit HomeVisit[]
+
+  @@map("user")
+}
+
+model Patient {
+  id         Int          @id @default(autoincrement())
+  homeVisit  Boolean      @map("home_vist")
+  userId     Int          @map("user_id")
+  testId     Int          @map("test_id")
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt  DateTime     @default(now()) @map("updated_at") @db.Timestamp(6)
+  user       User         @relation(fields: [userId], references: [id])
+  test       Test         @relation(fields: [testId], references: [id])
+  UserReport UserReport[]
+
+  @@map("patient")
+}
+
+model Test {
+  id          Int          @id @default(autoincrement())
+  name        String       @map("name")
+  shortName   String       @map("short_name")
+  isActive    Boolean      @map("is_active")
+  price       Float
+  measurement Json
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime     @default(now()) @map("updated_at") @db.Timestamp(6)
+  Patient     Patient[]
+  UserReport  UserReport[]
+  HomeVisit   HomeVisit[]
+
+  @@map("test")
+}
+
+model UserReport {
+  id         Int      @id @default(autoincrement())
+  patientId  Int      @map("patient_id")
+  testId     Int      @map("test_id")
+  testResult Json     @map("test_result")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt  DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+  patient    Patient  @relation(fields: [patientId], references: [id])
+  test       Test     @relation(fields: [testId], references: [id])
+
+  @@map("user_report")
+}
+
+model HomeVisit {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  testId      Int      @map("test_id")
+  bookingDate DateTime @db.Date
+  isApproved  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  user        User     @relation(fields: [userId], references: [id])
+  test        Test     @relation(fields: [testId], references: [id])
+
+  @@map("home_visit")
+}
